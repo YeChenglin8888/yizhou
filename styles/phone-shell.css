@@ -1057,7 +1057,7 @@ html.phone-shell-narrow .dock .dock-glyph-box {
 /* ── Mobile responsive ──
    判定由 lib/shell-layout-mode.ts 挂到 html.phone-shell-mobile：
    原生 Capacitor 壳恒为 true（真实设备本身就是手机，不需要内嵌手机框），
-   纯浏览器沿用 (max-width:500px)+(hover:none)+(pointer:coarse) 媒体查询。
+   纯浏览器沿用「视口 ≤500px 或 触屏主指针」媒体查询（见 shell-layout-mode.ts）。
    不能写回 @media——部分 ROM/手写笔设备误报 hover/pointer 特性、
    折叠屏/平板视口可 >500px，会让整个移动端布局静默失效。 */
 

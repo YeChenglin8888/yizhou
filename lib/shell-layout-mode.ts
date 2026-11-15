@@ -8,14 +8,17 @@
 
 import { Capacitor } from "@capacitor/core";
 
-const MOBILE_MQ = "(max-width: 500px) and (hover: none) and (pointer: coarse)";
+// 判定放宽为「或」：触屏主指针 或 窄视口 任一成立即按手机壳渲染。
+// 原版要求三者同时满足，部分手机浏览器/PWA 会把 hover 或 pointer 误报为
+// hover/fine（横屏、外接鼠标、手写笔），导致真机上退回带手机边框的桌面布局。
+const MOBILE_MQ = "(max-width: 500px)";
 const TOUCH_MQ = "(hover: none) and (pointer: coarse)";
 const NARROW_MQ = "(max-width: 373px)";
 
 /** 是否按「手机全屏壳」渲染（原生壳恒真；浏览器看媒体查询）。 */
 export function isPhoneShellMobile(): boolean {
     if (Capacitor.isNativePlatform()) return true;
-    return window.matchMedia(MOBILE_MQ).matches;
+    return window.matchMedia(MOBILE_MQ).matches || window.matchMedia(TOUCH_MQ).matches;
 }
 
 /** 主指针是否触摸（原生壳恒真；浏览器看媒体查询）。 */
@@ -32,7 +35,8 @@ export function isTouchPrimary(): boolean {
  */
 export function installShellLayoutMode(): void {
     const root = document.documentElement;
-    const mobileMq = window.matchMedia(MOBILE_MQ);
+    const mobileWidthMq = window.matchMedia(MOBILE_MQ);
+    const touchMq = window.matchMedia(TOUCH_MQ);
     const narrowMq = window.matchMedia(NARROW_MQ);
 
     const apply = () => {
@@ -43,7 +47,7 @@ export function installShellLayoutMode(): void {
 
     apply();
     // MediaQueryList.addEventListener 需要 Chrome 39+；addListener 兜底更旧 WebView。
-    for (const mql of [mobileMq, narrowMq]) {
+    for (const mql of [mobileWidthMq, touchMq, narrowMq]) {
         if (typeof mql.addEventListener === "function") {
             mql.addEventListener("change", apply);
         } else {
