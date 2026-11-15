@@ -143,7 +143,7 @@ export function AgentComputerSettings({ onNotice }: { onNotice?: (msg: string) =
                     <div className="flex flex-col gap-1.5">
                         <span className="menu-label font-medium">连接密钥（AGENT_TOKEN）</span>
                         <Input
-                            type="password"
+                            type="password" autoComplete="new-password"
                             value={config.token}
                             placeholder="部署时自定的那串密钥"
                             onChange={e => setConfig(current => ({ ...current, token: e.target.value }))}

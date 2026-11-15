@@ -5,10 +5,10 @@ import { useLayoutEffect, useRef } from "react";
 import { isTouchPrimary } from "@/lib/shell-layout-mode";
 
 const SCRIPT = [
-  { side: "right", text: "you ever zone out mid-toast?", start: 80, type: 0 },
-  { side: "left", text: "the bread became a small sunset.", start: 560, type: 310 },
-  { side: "right", text: "beautiful. also concerning.", start: 1540, type: 0 },
-  { side: "left", text: "let it breathe until it remembers.", start: 2140, type: 340 }
+  { side: "right", text: "哥哥，今天回来吗？", start: 80, type: 0 },
+  { side: "left", text: "巡航结束就回，给你留了红烧鸡翅。", start: 560, type: 310 },
+  { side: "right", text: "我也想你了。", start: 1540, type: 0 },
+  { side: "left", text: "我知道。等我到家。", start: 2140, type: 340 }
 ] as const;
 
 const T = {
@@ -19,9 +19,9 @@ const T = {
   tagline: 8520
 };
 
-const KLEIN = "#174BFF";
-const KLEIN_DEEP = "#0B2ED8";
-const PAPER = "#F1F2F6";
+const KLEIN = "#E07A3F";
+const KLEIN_DEEP = "#B85C2E";
+const PAPER = "#FBF3EA";
 const INK = "#1A1A1A";
 const FONT_UI = "\"Inter\", -apple-system, BlinkMacSystemFont, \"Helvetica Neue\", sans-serif";
 const FONT_SERIF = "\"Instrument Serif\", Georgia, \"Times New Roman\", serif";
@@ -148,7 +148,7 @@ export function SplashAnimation() {
         if (this.y < -10) this.reset(false);
       }
       draw() {
-        ctx.fillStyle = this.tone ? `rgba(23,75,255,${this.alpha})` : `rgba(40,40,40,${this.alpha * 0.65})`;
+        ctx.fillStyle = this.tone ? `rgba(224,122,63,${this.alpha})` : `rgba(60,50,40,${this.alpha * 0.65})`;
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
         ctx.fill();
@@ -254,7 +254,7 @@ export function SplashAnimation() {
         const radius = lerp(this.h / 2, Math.min(sw, sh) * 0.46, m);
         const softEdge = Math.pow(1 - clamp(m / 0.72, 0, 1), 1.8);
         if (softEdge > 0.01) {
-          ctx.shadowColor = this.side === "left" ? `rgba(255,255,255,${0.68 * softEdge})` : `rgba(26,60,240,${0.24 * softEdge})`;
+          ctx.shadowColor = this.side === "left" ? `rgba(255,255,255,${0.68 * softEdge})` : `rgba(190,100,45,${0.24 * softEdge})`;
           ctx.shadowBlur = this.side === "left" ? 10 * softEdge : 14 * softEdge;
         }
         const drawBubbleShape = () => {
@@ -444,11 +444,11 @@ export function SplashAnimation() {
         c.textBaseline = "middle";
         const cx = cssSize / 2;
         const cy = cssSize / 2;
-        c.fillStyle = "rgba(23,75,255,0.09)";
+        c.fillStyle = "rgba(224,122,63,0.09)";
         for (const [dx, dy] of [[-1.6, 0], [1.6, 0], [0, -1.6], [0, 1.6], [-1.1, -1.1], [1.1, 1.1], [-1.1, 1.1], [1.1, -1.1]]) {
           c.fillText(this.ch, cx + dx, cy + dy);
         }
-        c.fillStyle = "rgba(23,75,255,0.42)";
+        c.fillStyle = "rgba(224,122,63,0.42)";
         c.fillText(this.ch, cx, cy);
         this.sprite = canvas;
         this.spriteCssSize = cssSize;
@@ -480,9 +480,9 @@ export function SplashAnimation() {
       chars = [];
       charsSpawnedFor.clear();
       titles = [];
-      titleFontSize = Math.max(54, Math.min(96, W * 0.22));
+      titleFontSize = Math.max(72, Math.min(128, W * 0.3));
       ctx.font = `italic 400 ${titleFontSize}px ${FONT_SERIF}`;
-      const word = "pneuma";
+      const word = "昼光";
       const widths = [...word].map((c) => ctx.measureText(c).width);
       const spacing = titleFontSize * 0.04;
       const total = widths.reduce((sum, width) => sum + width, 0) + spacing * (word.length - 1);
@@ -521,8 +521,8 @@ export function SplashAnimation() {
       const bgKey = `${W}x${H}`;
       if (!bgGradient || bgGradientKey !== bgKey) {
         const grad = ctx.createRadialGradient(W / 2, H * 0.45, 0, W / 2, H * 0.45, Math.max(W, H) * 0.75);
-        grad.addColorStop(0, "rgba(23,75,255,0)");
-        grad.addColorStop(1, "rgba(23,75,255,0.08)");
+        grad.addColorStop(0, "rgba(224,122,63,0)");
+        grad.addColorStop(1, "rgba(224,122,63,0.08)");
         bgGradient = grad;
         bgGradientKey = bgKey;
       }
@@ -537,9 +537,9 @@ export function SplashAnimation() {
       titles.forEach((tl) => { tl.update(t); tl.draw(); });
       if (t > T.tagline) {
         const op = clamp((t - T.tagline) / 900, 0, 0.7);
-        const txt = "BREATH  ·  AI";
+        const txt = "昼 光 · AI 小 手 机";
         const ls = 2.2;
-        ctx.fillStyle = `rgba(23,75,255,${op})`;
+        ctx.fillStyle = `rgba(224,122,63,${op})`;
         ctx.font = `300 10px ${FONT_MONO}`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
@@ -603,8 +603,8 @@ export function SplashAnimation() {
     <div ref={stageRef} className="splash-animation-stage" aria-hidden>
       <canvas ref={canvasRef} className="splash-animation-canvas" />
       <div className="splash-animation-grain" />
-      <div className="splash-animation-corner">pneuma / 0.1</div>
-      <div className="splash-animation-corner splash-animation-corner-right">no.001</div>
+      <div className="splash-animation-corner">昼光 / 1.0</div>
+      <div className="splash-animation-corner splash-animation-corner-right">for 阿慈</div>
     </div>
   );
 }

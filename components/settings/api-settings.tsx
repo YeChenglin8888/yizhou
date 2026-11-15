@@ -9,7 +9,8 @@ import { generateEmbedding, isEmbeddingModelName } from "@/lib/memory-embedding"
 import { ConfirmDialog } from "@/components/ui/modal";
 import { Toggle, Input } from "@/components/ui/form";
 import { Alert } from "@/components/ui/feedback";
-import { determineBaseUrl } from "@/lib/api-helpers";
+import { determineBaseUrl, isNativeAnthropicApi } from "@/lib/api-helpers";
+import { hydrateKvDb, isKvHydrated } from "@/lib/kv-db";
 import { httpFetch } from "@/lib/native-http";
 import { buildNativeChatTools, sendLLMStreamRequest, sendLLMToolStreamRequest } from "@/lib/chat-engine";
 import { nativeToolProtocolForConfig } from "@/lib/llm-provider-adapter";
@@ -29,8 +30,15 @@ const DEFAULT_CONFIGS: ApiConfig[] = [
     }
 ];
 
+// 所有内置服务商的官方默认 Base URL（规范化后），用于识别"非自定义"的 baseUrl 值
+const PROVIDER_DEFAULT_URLS = new Set(
+    ["OpenAI", "Anthropic", "Google", "DeepSeek", "Groq", "OpenRouter", "Moonshot", "Zhipu", "SiliconFlow", "TogetherAI"]
+        .map((p) => determineBaseUrl({ provider: p }).trim().replace(/\/+$/, ""))
+        .filter(Boolean)
+);
+
 function getNativeToolProtocolLabel(config: ApiConfig): string {
-    if (config.provider === "Anthropic" && !config.baseUrl) return "Anthropic";
+    if (isNativeAnthropicApi(config)) return "Anthropic";
     if (config.provider === "Google") return "Gemini";
     return "OpenAI-compatible";
 }
@@ -49,16 +57,24 @@ export function ApiSettings() {
     const [isTesting, setIsTesting] = useState<Record<string, boolean>>({});
     const [testResult, setTestResult] = useState<Record<string, { success: boolean; message: string }>>({});
 
-    // Load from localStorage on mount
+    // Load configs on mount. kv-store hydration is async: reading before it
+    // finishes returns [] and the DEFAULT_CONFIGS branch below would then
+    // overwrite the real configs in IndexedDB — wait for hydration first,
+    // and never auto-save defaults while the store isn't hydrated.
     useEffect(() => {
-        const loaded = loadApiConfigs();
-        if (loaded.length > 0) {
-            setConfigs(loaded);
-        } else {
-            setConfigs(DEFAULT_CONFIGS);
-            saveApiConfigs(DEFAULT_CONFIGS);
-        }
-        setIsLoaded(true);
+        let cancelled = false;
+        void hydrateKvDb().then(() => {
+            if (cancelled) return;
+            const loaded = loadApiConfigs();
+            if (loaded.length > 0) {
+                setConfigs(loaded);
+            } else {
+                setConfigs(DEFAULT_CONFIGS);
+                if (isKvHydrated()) saveApiConfigs(DEFAULT_CONFIGS);
+            }
+            setIsLoaded(true);
+        });
+        return () => { cancelled = true; };
     }, []);
 
     const persist = useCallback((newConfigs: ApiConfig[]) => {
@@ -349,7 +365,26 @@ export function ApiSettings() {
                                             <label className="menu-desc ml-1">服务商 (Provider)</label>
                                             <select
                                                 value={config.provider}
-                                                onChange={(e) => updateConfig(config.id, { provider: e.target.value })}
+                                                onChange={(e) => {
+                                                    const nextProvider = e.target.value;
+                                                    const updates: Partial<ApiConfig> = { provider: nextProvider };
+                                                    // 切换服务商时自动带出对应默认 Base URL：
+                                                    // 仅当原值为空或仍是旧服务商的默认地址时替换，
+                                                    // 用户手填的中转地址保留不动。API Key 不做自动填充。
+                                                    if (nextProvider !== "Custom") {
+                                                        const norm = (u?: string) => (u ?? "").trim().replace(/\/+$/, "");
+                                                        const oldDefault = determineBaseUrl({ provider: config.provider });
+                                                        const newDefault = determineBaseUrl({ provider: nextProvider });
+                                                        const current = norm(config.baseUrl);
+                                                        // 当前值为空、或仍是任一服务商的官方默认地址（含手填官方端点/末尾斜杠差异）时跟随切换；
+                                                        // 真正的中转站自定义地址保留不动。
+                                                        const isOfficialValue = PROVIDER_DEFAULT_URLS.has(current);
+                                                        if (newDefault && (!current || isOfficialValue)) {
+                                                            updates.baseUrl = newDefault;
+                                                        }
+                                                    }
+                                                    updateConfig(config.id, updates);
+                                                }}
                                                 className="ui-select"
                                             >
                                                 <option value="OpenAI">OpenAI</option>
@@ -385,7 +420,7 @@ export function ApiSettings() {
                                                         ? "https://api.example.com/v1"
                                                         : config.provider === "Google"
                                                             ? "https://your-proxy.example.com/v1beta"
-                                                            : "默认用官方端点，留空即可"
+                                                            : `${determineBaseUrl({ provider: config.provider })}（默认，可改中转）`
                                                 }
                                             />
                                         </div>
@@ -393,7 +428,7 @@ export function ApiSettings() {
                                         <div className="flex flex-col gap-1">
                                             <label className="menu-desc ml-1">API Key</label>
                                             <Input
-                                                type="password"
+                                                type="password" autoComplete="new-password"
                                                 value={config.apiKey}
                                                 onChange={(e) => updateConfig(config.id, { apiKey: e.target.value })}
                                                 placeholder="sk-..."

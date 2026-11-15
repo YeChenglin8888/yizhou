@@ -271,6 +271,9 @@ function isHiddenChatFlowMessage(msg: ChatMessage, displayContent?: string): boo
 const CHAT_BG_COMPLETE = "chat-bg-complete";
 const CHAT_OFFLINE_MODE_PREFIX = "chat-offline-mode:";
 const CHAT_THEATER_MODE_PREFIX = "chat-theater-mode:";
+// 发送消息后自动触发角色回复的防抖窗口：连发多条会重置计时，安静后才生成，
+// 兼顾「发完就等回复」和「连续补充几句再让她回」。
+const AUTO_REPLY_DEBOUNCE_MS = 1500;
 const OFFLINE_INITIAL_LOAD = 10;
 const OFFLINE_LOAD_MORE_COUNT = 10;
 
@@ -1320,7 +1323,11 @@ export function ChatRoom({ session, onBack, onDeleted }: ChatRoomProps) {
     const visibleMessagesRef = useRef<ChatMessage[]>([]);
     const hasMoreRef = useRef(false);
     const offlineGenerationInputRef = useRef("");
-    useEffect(() => () => { mountedRef.current = false; }, []);
+    const autoReplyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    useEffect(() => () => {
+        mountedRef.current = false;
+        if (autoReplyTimerRef.current) clearTimeout(autoReplyTimerRef.current);
+    }, []);
     useEffect(() => { visibleMessagesRef.current = messages; }, [messages]);
     useEffect(() => { hasMoreRef.current = hasMore; }, [hasMore]);
     useChatBottomReserve(
@@ -3931,6 +3938,15 @@ export function ChatRoom({ session, onBack, onDeleted }: ChatRoomProps) {
                 setMessages(prev => [...prev, diceAside]);
             }
             setPendingGenerate(true);
+            // 发送后自动触发回复：短防抖合并连发（等价于替用户按 ✨）。
+            // 离线模式走独立回复链路；autoReply 调用方已立即触发，不再排程。
+            if (!offlineMode && !options?.autoReply) {
+                if (autoReplyTimerRef.current) clearTimeout(autoReplyTimerRef.current);
+                autoReplyTimerRef.current = setTimeout(() => {
+                    autoReplyTimerRef.current = null;
+                    void triggerAIResponse();
+                }, AUTO_REPLY_DEBOUNCE_MS);
+            }
             // 按回复键发送：消息落库后立即触发模型回复（无论插件是否异步改写，
             // 都在消息真正写入后触发，避免回复基于旧上下文）
             if (options?.autoReply) void triggerAIResponse();

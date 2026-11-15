@@ -5,6 +5,7 @@ import { Plus, Play, Pause, AlertCircle, RefreshCw, FileEdit, Trash2, X, Check, 
 import { SettingsContext } from "../phone-settings-app";
 import type { VoiceApiConfig } from "@/lib/settings-types";
 import { loadVoiceConfigs, saveVoiceConfigs } from "@/lib/settings-storage";
+import { hydrateKvDb, isKvHydrated } from "@/lib/kv-db";
 import { synthesizeSpeech } from "@/lib/tts-service";
 import { httpFetch } from "@/lib/native-http";
 import { ConfirmDialog } from "@/components/ui/modal";
@@ -248,18 +249,24 @@ export function VoiceSettings() {
     const [fetchedVoices, setFetchedVoices] = useState<Record<string, VoiceOption[]>>({});
     const [fetchError, setFetchError] = useState<Record<string, string>>({});
 
-    // Load from localStorage on mount
+    // Load configs on mount. Wait for kv hydration first: reading early
+    // returns [] and the DEFAULT branch would overwrite real configs in IDB.
     useEffect(() => {
-        const stored = loadVoiceConfigs();
-        const loaded = normalizeVoiceConfigs(stored);
-        if (loaded.length > 0) {
-            setConfigs(loaded);
-            if (loaded.length !== stored.length) saveVoiceConfigs(loaded);
-        } else {
-            setConfigs(DEFAULT_VOICE_CONFIGS);
-            saveVoiceConfigs(DEFAULT_VOICE_CONFIGS);
-        }
-        setIsLoaded(true);
+        let cancelled = false;
+        void hydrateKvDb().then(() => {
+            if (cancelled) return;
+            const stored = loadVoiceConfigs();
+            const loaded = normalizeVoiceConfigs(stored);
+            if (loaded.length > 0) {
+                setConfigs(loaded);
+                if (loaded.length !== stored.length) saveVoiceConfigs(loaded);
+            } else {
+                setConfigs(DEFAULT_VOICE_CONFIGS);
+                if (isKvHydrated()) saveVoiceConfigs(DEFAULT_VOICE_CONFIGS);
+            }
+            setIsLoaded(true);
+        });
+        return () => { cancelled = true; };
     }, []);
 
     const persist = useCallback((newConfigs: VoiceApiConfig[]) => {
@@ -679,7 +686,7 @@ export function VoiceSettings() {
                                         <div className="flex flex-col gap-1">
                                             <label className="menu-desc ml-1">API Key</label>
                                             <Input
-                                                type="password"
+                                                type="password" autoComplete="new-password"
                                                 value={config.apiKey}
                                                 onChange={(e) => updateConfig(config.id, { apiKey: e.target.value })}
                                                 placeholder="输入密钥..."

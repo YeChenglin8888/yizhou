@@ -10,6 +10,7 @@ import {
     saveImageGenerationSettings,
 } from "@/lib/settings-storage";
 import { loadCharacters } from "@/lib/character-storage";
+import { hydrateKvDb } from "@/lib/kv-db";
 import type { Character } from "@/lib/character-types";
 import { getChatImageFromIndexedDB, saveChatImageToIndexedDB } from "@/lib/chat-asset-storage";
 import {
@@ -112,6 +113,11 @@ export function ImageGenerationSettings() {
     const activeOpenAiPreset = openaiPresets.find(p => p.id === activeOpenAiPresetId) || openaiPresets[0];
 
     useEffect(() => {
+        // Wait for kv hydration before reading/writing settings — an early
+        // empty read could be saved back over the real IndexedDB data.
+        let cancelled = false;
+        void hydrateKvDb().then(() => {
+        if (cancelled) return;
         // Sync the ratio hint to the saved size on load, so the hint is present
         // by default (not only after the user manually switches the size).
         const loaded = loadImageGenerationSettings();
@@ -144,6 +150,8 @@ export function ImageGenerationSettings() {
         const loadedCharacters = loadCharacters();
         setCharacters(loadedCharacters);
         setSelectedCharacterId(loadedCharacters[0]?.id || null);
+        });
+        return () => { cancelled = true; };
     }, []);
 
     useEffect(() => {
@@ -536,7 +544,7 @@ export function ImageGenerationSettings() {
                         <div className="flex flex-col gap-1">
                             <label className="menu-desc ml-1">NovelAI API Token</label>
                             <Input
-                                type="password"
+                                type="password" autoComplete="new-password"
                                 value={naiSettings.apiKey}
                                 onChange={(event) => {
                                     updateNovelAi({ apiKey: event.target.value });
@@ -808,7 +816,7 @@ export function ImageGenerationSettings() {
                         <div className="flex flex-col gap-1">
                             <label className="menu-desc ml-1">API Key</label>
                             <Input
-                                type="password"
+                                type="password" autoComplete="new-password"
                                 value={activeOpenAiPreset.apiKey}
                                 onChange={(event) => updateOpenAiPreset({ apiKey: event.target.value })}
                                 placeholder="sk-..."
@@ -956,7 +964,7 @@ export function ImageGenerationSettings() {
                     <div className="flex flex-col gap-1">
                         <label className="menu-desc ml-1">ImgBB API Key</label>
                         <Input
-                            type="password"
+                            type="password" autoComplete="new-password"
                             value={settings.imageHosting.imgbbApiKey}
                             onChange={(event) => updateImageHosting({ imgbbApiKey: event.target.value })}
                             placeholder="从 imgbb.com/api/1 获取"

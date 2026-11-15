@@ -6,6 +6,7 @@ import { ArrowRight } from "lucide-react";
 
 import { MediaMaintenanceScheduler } from "@/components/media-maintenance-scheduler";
 import { MemoryConsolidationScheduler } from "@/components/memory-consolidation-scheduler";
+import { FirstRunOnboarding } from "@/components/onboarding-guide";
 import { DesktopShell } from "./desktop-shell";
 
 import { SplashAnimation } from "./splash-animation";
@@ -116,6 +117,15 @@ export function MainApp() {
       await hydrateKvDb();
       if (cancelled) return;
 
+      // 首启资源包注入（夏以昼角色卡/世界书）：本地同步写入，失败静默降级
+      try {
+        const { ensureSeedPack } = await import("@/lib/seed-pack");
+        await ensureSeedPack();
+      } catch (error) {
+        console.warn("[MainApp] seed pack failed:", error);
+      }
+      if (cancelled) return;
+
       let nextPreparedTheme: PreparedDesktopTheme | null = null;
       try {
         nextPreparedTheme = await prepareDesktopThemeForFirstPaint();
@@ -170,6 +180,7 @@ export function MainApp() {
         />
         <MediaMaintenanceScheduler />
         <MemoryConsolidationScheduler />
+        <FirstRunOnboarding />
       </MusicProvider>
     </main>
   );

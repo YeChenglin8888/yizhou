@@ -975,7 +975,7 @@ function normalizeChatSessions(sessions: ChatSession[]): NormalizedSessionList {
 const REMOVED_CONTACTS_KEY = "ai_phone_removed_contacts_v1";
 registerKvMigration(REMOVED_CONTACTS_KEY);
 
-function loadRemovedContactIds(): Set<string> {
+export function loadRemovedContactIds(): Set<string> {
     if (typeof window === "undefined") return new Set<string>();
     try {
         const raw = kvGet(REMOVED_CONTACTS_KEY);

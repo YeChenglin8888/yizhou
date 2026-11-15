@@ -6261,3 +6261,107 @@ html.phone-shell-mobile .ui-card-delete { opacity: 1; }
   color: var(--c-text);
 }
 .about-release-dl:active { opacity: 0.7; }
+
+/* ══════════════════════════════════════════
+   Onboarding Guide (.onb-*)
+   ══════════════════════════════════════════ */
+
+.onb-card {
+  width: min(86%, 340px);
+  background: var(--c-panel);
+  border-radius: 18px;
+  padding: 18px 20px 16px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.28);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  animation: modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.onb-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.onb-step-no {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--c-text-muted);
+}
+
+.onb-icon-row {
+  display: flex;
+  justify-content: center;
+}
+
+.onb-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, currentColor 12%, transparent);
+}
+
+.onb-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--c-text-title);
+  text-align: center;
+}
+
+.onb-body {
+  font-size: 13px;
+  color: var(--c-text);
+  line-height: 1.75;
+  text-align: center;
+}
+
+.onb-body p {
+  margin: 0 0 8px;
+}
+
+.onb-body p:last-child {
+  margin-bottom: 0;
+}
+
+.onb-note {
+  font-size: 12px;
+  color: var(--c-text-muted);
+}
+
+.onb-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+.onb-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--c-panel-border);
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.onb-dot-active {
+  background: var(--c-accent);
+  transform: scale(1.25);
+}
+
+.onb-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.onb-actions .ui-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}

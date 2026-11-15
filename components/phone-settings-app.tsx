@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useLayoutEffect, useCallback, useRef, createContext, type CSSProperties, type ReactNode } from "react";
-import { Activity, ChevronRight, Clock, Database, FileText, Fingerprint, Globe, HardDrive, Image, Info, Laptop, Layers, Link2, Mic, SlidersHorizontal, UserCircle, Wrench, X,  } from "lucide-react";
+import { Activity, BookOpen, ChevronRight, Clock, Database, FileText, Fingerprint, Globe, HardDrive, Image, Info, Laptop, Layers, Link2, Mic, SlidersHorizontal, UserCircle, Wrench, X,  } from "lucide-react";
 import { ApiSettings } from "./settings/api-settings";
 import { VoiceSettings } from "./settings/voice-settings";
 import { ImageGenerationSettings } from "./settings/image-generation-settings";
@@ -14,6 +14,7 @@ import { AboutDeclaration } from "./settings/about-declaration";
 import { BindingManager } from "./settings/binding-manager";
 import { ToolboxSettings } from "./settings/toolbox-settings";
 import { AgentComputerSettings } from "./settings/agent-computer-settings";
+import { OnboardingGuide } from "./onboarding-guide";
 import { PageShell } from "./ui/page-shell";
 import { CardGrid, FeaturedCard, type CardItem, type FeaturedCardItem } from "./ui/card-grid";
 import { GlassIcon } from "./ui/glass-icon";
@@ -46,6 +47,7 @@ type SubPage =
     | "identity"
     | "toolbox"
     | "agentComputer"
+    | "guide"
     | "about";
 
 const SETTINGS_MENU = [
@@ -60,6 +62,7 @@ const SETTINGS_MENU = [
     { id: "toolbox", icon: Wrench, label: "聊天工具箱", desc: "外部工具调用", iconColor: BINDING_ACCENTS.voice , glass: "toolbox" },
     { id: "agentComputer", icon: Laptop, label: "角色电脑", desc: "云端小电脑（自部署）", iconColor: BINDING_ACCENTS.memory , glass: "agent-computer" },
     { id: "identity", icon: UserCircle, label: "用户身份", desc: "个人信息", iconColor: BINDING_ACCENTS.identity , glass: "identity" },
+    { id: "guide", icon: BookOpen, label: "新手引导", desc: "使用说明", iconColor: BINDING_ACCENTS.memory , glass: "worldbook" },
     { id: "about", icon: Info, label: "关于与声明", desc: "版本与协议", iconColor: BINDING_ACCENTS.memory , glass: "about" },
 ] as const;
 
@@ -211,6 +214,8 @@ export function PhoneSettingsApp({ onClose, onNotice }: SettingsPageProps) {
                 return <AgentComputerSettings onNotice={onNotice} />;
             case "identity":
                 return <UserIdentitySettings />;
+            case "guide":
+                return <OnboardingGuide open onClose={() => setCurrentPage("main")} autoMarkSeen={false} />;
             case "about":
                 return <AboutDeclaration />;
             default:

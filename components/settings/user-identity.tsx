@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useContext } from "react";
 import { Plus, User, Trash2, FileEdit, AlertCircle, Camera, Link, X, Check } from "lucide-react";
 import { SettingsContext } from "../phone-settings-app";
 import { loadUserIdentities, saveUserIdentities } from "@/lib/settings-storage";
+import { hydrateKvDb, isKvHydrated } from "@/lib/kv-db";
 import { Input } from "@/components/ui/form";
 import { ConfirmDialog } from "@/components/ui/modal";
 import { pickFile } from "@/lib/file-picker";
@@ -70,13 +71,20 @@ export function UserIdentitySettings() {
     const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
     useEffect(() => {
-        const saved = loadUserIdentities();
-        if (saved.length > 0) {
-            setIdentitiesRaw(saved);
-        } else {
-            setIdentitiesRaw(DEFAULT_IDENTITIES);
-            saveUserIdentities(DEFAULT_IDENTITIES);
-        }
+        // Wait for kv hydration: an early empty read must not trigger the
+        // DEFAULT_IDENTITIES auto-save, which would overwrite real IDB data.
+        let cancelled = false;
+        void hydrateKvDb().then(() => {
+            if (cancelled) return;
+            const saved = loadUserIdentities();
+            if (saved.length > 0) {
+                setIdentitiesRaw(saved);
+            } else {
+                setIdentitiesRaw(DEFAULT_IDENTITIES);
+                if (isKvHydrated()) saveUserIdentities(DEFAULT_IDENTITIES);
+            }
+        });
+        return () => { cancelled = true; };
     }, []);
 
     const setIdentities = useCallback((next: UserIdentity[]) => {

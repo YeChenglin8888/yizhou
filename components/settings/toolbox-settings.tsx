@@ -1306,7 +1306,7 @@ export function ToolboxSettings() {
                                 {apiKeyField && (
                                 <div className="flex flex-col gap-1">
                                     <label className="menu-desc ml-1">API Key</label>
-                                    <Input type="password" value={editRest.fixedParams?.[apiKeyField] ?? ""} placeholder="填入你的 API Key"
+                                    <Input type="password" autoComplete="new-password" value={editRest.fixedParams?.[apiKeyField] ?? ""} placeholder="填入你的 API Key"
                                         onChange={e => setR({ fixedParams: { ...editRest.fixedParams, [apiKeyField]: e.target.value } })} />
                                     <span className="menu-desc ml-1">
                                         {editRest.id === "builtin_weather" && "去 weatherapi.com 免费注册获取"}
@@ -1585,7 +1585,7 @@ export function ToolboxSettings() {
                             <div className="flex flex-col gap-1">
                                 <label className="menu-desc ml-1">访问 Token（可选）</label>
                                 <Input
-                                    type="password"
+                                    type="password" autoComplete="new-password"
                                     value={editMcp.accessToken || ""}
                                     placeholder="需要鉴权的 MCP 填这里，会作为 Bearer Token 发送"
                                     onChange={e => {

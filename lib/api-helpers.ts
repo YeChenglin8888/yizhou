@@ -6,6 +6,16 @@ import type { ApiConfig } from "./settings-types";
 import { httpFetch } from "./native-http";
 
 const SIMPLE_ANTHROPIC_AUTO_MAX_TOKENS = 8192;
+const ANTHROPIC_OFFICIAL_BASE_URL = "https://api.anthropic.com/v1";
+
+function normalizeBaseUrl(url: string | undefined): string {
+    return (url ?? "").trim().replace(/\/+$/, "").toLowerCase();
+}
+
+/** 官方 Anthropic 端点（含用户显式填入官方地址的情况）视为原生协议。 */
+function isOfficialAnthropicBaseUrl(url: string | undefined): boolean {
+    return normalizeBaseUrl(url) === ANTHROPIC_OFFICIAL_BASE_URL;
+}
 
 /**
  * Resolve the base URL for an API config.
@@ -16,7 +26,7 @@ export function determineBaseUrl(config: { provider: string; baseUrl?: string })
     if (config.baseUrl) return config.baseUrl;
     switch (config.provider) {
         case "OpenAI":      return "https://api.openai.com/v1";
-        case "Anthropic":   return "https://api.anthropic.com/v1";
+        case "Anthropic":   return ANTHROPIC_OFFICIAL_BASE_URL;
         case "Google":      return "https://generativelanguage.googleapis.com/v1beta";
         case "DeepSeek":    return "https://api.deepseek.com/v1";
         case "Groq":        return "https://api.groq.com/openai/v1";
@@ -50,7 +60,7 @@ export function buildRequestHeaders(config: ApiConfig, baseUrl: string): Record<
         "Content-Type": "application/json",
     };
 
-    if (config.provider === "Anthropic" && !config.baseUrl) {
+    if (isNativeAnthropicApi(config)) {
         // Native Anthropic API uses x-api-key
         headers["x-api-key"] = config.apiKey;
         headers["anthropic-version"] = "2023-06-01";
@@ -75,7 +85,10 @@ export function buildRequestHeaders(config: ApiConfig, baseUrl: string): Record<
  * behind OpenAI-compatible endpoints should use Custom provider + baseUrl.
  */
 export function isNativeAnthropicApi(config: ApiConfig): boolean {
-    return config.provider === "Anthropic" && !config.baseUrl;
+    // Base URL 留空或显式填了官方端点都走原生 Messages API；
+    // 中转站（任何非官方地址）走 OpenAI 兼容 + Bearer。
+    return config.provider === "Anthropic"
+        && (!config.baseUrl || isOfficialAnthropicBaseUrl(config.baseUrl));
 }
 
 /**

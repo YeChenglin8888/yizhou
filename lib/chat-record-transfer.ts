@@ -128,7 +128,7 @@ export async function importChatRecordFile(
   const parsed = JSON.parse(await file.text()) as Omit<Partial<ChatRecordFile>, "type"> & { type?: string };
   const isKnownType = parsed.type === CHAT_RECORD_FILE_TYPE || parsed.type === LEGACY_CHAT_RECORD_FILE_TYPE;
   if (!isKnownType || parsed.version !== 1 || !Array.isArray(parsed.messages)) {
-    throw new Error("不是有效的 Pneuma 聊天记录文件");
+    throw new Error("不是有效的昼光聊天记录文件");
   }
   if (parsed.messages.length > 100_000) throw new Error("聊天记录超过 100000 条，请拆分后再导入");
 

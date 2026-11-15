@@ -922,7 +922,7 @@ export function ResourceHubApp({ onClose, onNotice }: { onClose: () => void; onN
                                 <p>
                                     贡献公开仓库功能已接入<b>工坊</b>，<br />
                                     可以<b className="rh-build-hot">让小坊将你的修改贡献到公开仓库哦～</b><br />
-                                    Pneuma 会进行飞速审核，感谢您的付出～
+                                    昼光会进行飞速审核，感谢您的付出～
                                 </p>
                                 <div className="rh-build-note">需要自部署版本（有自己的 fork）</div>
                             </div>
@@ -1695,7 +1695,7 @@ export function ResourceHubApp({ onClose, onNotice }: { onClose: () => void; onN
                             </label>
                             <div className="rh-form-hint">资源经 jsDelivr CDN 读取，公开仓库无需登录。除非换资源源，一般不用改。</div>
                             <label>GitHub Token（可选，上传直传用）
-                                <input className="rh-input" type="password" value={uploadCfg.githubToken} placeholder="不填则上传走匿名审核队列" onChange={e => setUploadCfg(prev => ({ ...prev, githubToken: e.target.value }))} />
+                                <input className="rh-input" type="password" autoComplete="new-password" value={uploadCfg.githubToken} placeholder="不填则上传走匿名审核队列" onChange={e => setUploadCfg(prev => ({ ...prev, githubToken: e.target.value }))} />
                             </label>
                             <label>上传服务地址
                                 <input className="rh-input" value={uploadCfg.endpoint} onChange={e => setUploadCfg(prev => ({ ...prev, endpoint: e.target.value }))} />
